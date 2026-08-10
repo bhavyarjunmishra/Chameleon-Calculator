@@ -46,10 +46,10 @@ No installation or build tools are required.
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/bhavyarjunmishra/chameleon-calculator.git](https://github.com/bhavyarjunmishra/chameleon-calculator.git)
+    git clone [https://github.com/bhavyarjunmishra/Chameleon-Calculator.git](https://github.com/bhavyarjunmishra/Chameleon-Calculator.git)
     ```
 2.  Navigate into the directory:
     ```bash
-    cd chameleon-calculator
+    cd Chameleon-Calculator
     ```
 3.  Open `index.html` in any modern web browser.
