@@ -2,7 +2,7 @@
 
 A sleek, responsive, and aesthetically adaptable web calculator. Built with vanilla HTML5, CSS3, and JavaScript, it features a unique real-time theme engine that allows users to shift the calculator’s palette dynamically, echoing its namesake.
 
-🚀 **[Live Interactive Demo](https://yourusername.github.io/chameleon-calculator/)**
+🚀 **[Live Interactive Demo](https://bhavyarjunmishra.github.io/Chameleon-Calculator/)**
 
 ---
 
