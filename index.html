@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chameleon Calculator</title>
+    <!-- Favicon / Browser Tab Logo -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <style>
+        :root {
+            --page-bg: linear-gradient(135deg, #7bd3d0 0%, #4b7bec 100%);
+            --panel-bg: linear-gradient(145deg, #2b0f4f 0%, #4d1c85 100%);
+            --display-bg: #fdfefe;
+            --accent: #7cf0ff;
+            --accent-alt: #ff5fb2;
+            --button-text: #06202b;
+            --number-text: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--page-bg);
+            color: #fff;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        main {
+            width: min(100%, 420px);
+        }
+
+        .theme-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .theme-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .theme-btn,
+        .theme-toggle-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.95);
+            color: #222;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .theme-btn.active,
+        .theme-toggle-btn.active {
+            background: #222;
+            color: white;
+        }
+
+        .color-panel {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding-top: 2px;
+        }
+
+        .color-panel.open {
+            display: flex;
+        }
+
+        .color-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #222;
+            font-size: 0.85rem;
+        }
+
+        .color-picker input[type="color"] {
+            width: 24px;
+            height: 24px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+        }
+
+        .calculator {
+            background: var(--panel-bg);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 18px 40px var(--shadow);
+        }
+
+        .display-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .display-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #display,
+        #displayPreview {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 0 16px;
+            text-align: right;
+            background-color: var(--display-bg);
+            color: #10243a;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        #display {
+            height: 72px;
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
+        }
+
+        #displayPreview {
+            height: 38px;
+            font-size: 0.95rem;
+            opacity: 0.85;
+            background: linear-gradient(135deg, #ffffff, #eef6ff);
+        }
+
+        .action-btn,
+        .number-btn,
+        .operator-btn,
+        .equals-btn {
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .action-btn:hover,
+        .number-btn:hover,
+        .operator-btn:hover,
+        .equals-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.18);
+            filter: brightness(1.05);
+        }
+
+        .action-btn {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, var(--accent), #4fe9ff);
+            color: var(--button-text);
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .number-btn {
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent-alt), #ff7ac2);
+            color: var(--number-text);
+            min-width: 0;
+        }
+
+        .operator-btn {
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #4fe9ff);
+            color: var(--button-text);
+            min-width: 0;
+        }
+
+        .equals-btn {
+            grid-column: 4;
+            grid-row: 4;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #4fe9ff);
+            color: var(--button-text);
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .calculator {
+                padding: 14px;
+                border-radius: 18px;
+            }
+
+            .display-row {
+                gap: 8px;
+            }
+
+            #display {
+                height: 64px;
+            }
+
+            .action-btn,
+            .number-btn,
+            .operator-btn,
+            .equals-btn {
+                height: 58px;
+                border-radius: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="theme-controls" aria-label="Theme controls">
+            <div class="theme-group">
+                <button class="theme-toggle-btn active" id="presetToggle" type="button">Preset Themes</button>
+                <button class="theme-toggle-btn" id="customToggle" type="button">Custom Theme</button>
+            </div>
+
+            <div class="theme-group" id="presetThemes">
+                <button class="theme-btn active" data-theme="default" type="button">Default</button>
+                <button class="theme-btn" data-theme="sunset" type="button">Sunset</button>
+                <button class="theme-btn" data-theme="ocean" type="button">Ocean</button>
+                <button class="theme-btn" data-theme="midnight" type="button">Midnight</button>
+            </div>
+
+            <div class="color-panel" id="customThemes" aria-label="Custom color picker">
+                <label class="color-picker">
+                    <span>Bg</span>
+                    <input type="color" id="pageColor1" value="#84c4c4">
+                    <input type="color" id="pageColor2" value="#5bb7d0">
+                </label>
+                <label class="color-picker">
+                    <span>Panel</span>
+                    <input type="color" id="panelColor" value="#6610a0">
+                </label>
+                <label class="color-picker">
+                    <span>Accent</span>
+                    <input type="color" id="accentColor" value="#00ffff">
+                </label>
+                <label class="color-picker">
+                    <span>Number</span>
+                    <input type="color" id="numberColor" value="#f717bf">
+                </label>
+            </div>
+        </div>
+
+        <div class="calculator">
+            <div class="display-stack">
+                <input type="text" id="displayPreview" readonly aria-label="Live result preview" aria-live="polite" value="0">
+                <div class="display-row">
+                    <input type="text" id="display" readonly aria-label="Calculator display">
+                    <button class="action-btn" onclick="Backspace()" aria-label="Delete last character">⌫</button>
+                </div>
+            </div>
+
+            <div class="buttons-grid">
+                <button class="operator-btn" onclick="clearDisplay()">C</button>
+                <button class="operator-btn" onclick="appendToDisplay('/')">/</button>
+                <button class="operator-btn" onclick="appendToDisplay('×')">×</button>
+                <button class="operator-btn" onclick="appendToDisplay('-')">-</button>
+
+                <button class="number-btn" onclick="appendToDisplay('7')">7</button>
+                <button class="number-btn" onclick="appendToDisplay('8')">8</button>
+                <button class="number-btn" onclick="appendToDisplay('9')">9</button>
+                <button class="operator-btn" onclick="appendToDisplay('+')">+</button>
+
+                <button class="number-btn" onclick="appendToDisplay('4')">4</button>
+                <button class="number-btn" onclick="appendToDisplay('5')">5</button>
+                <button class="number-btn" onclick="appendToDisplay('6')">6</button>
+                <button class="operator-btn" onclick="appendToDisplay('%')">%</button>
+
+                <button class="number-btn" onclick="appendToDisplay('1')">1</button>
+                <button class="number-btn" onclick="appendToDisplay('2')">2</button>
+                <button class="number-btn" onclick="appendToDisplay('3')">3</button>
+                <button class="number-btn" onclick="appendToDisplay('.')">.</button>
+
+                <button class="number-btn" onclick="appendToDisplay('0')">0</button>
+                <button class="number-btn" onclick="appendToDisplay('(')">(</button>
+                <button class="number-btn" onclick="appendToDisplay(')')">)</button>
+                <button class="equals-btn" onclick="calculate()">=</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const themes = {
+            default: {
+                '--page-bg': 'linear-gradient(135deg, #7bd3d0 0%, #4b7bec 100%)',
+                '--panel-bg': 'linear-gradient(145deg, #2b0f4f 0%, #4d1c85 100%)',
+                '--display-bg': '#fdfefe',
+                '--accent': '#7cf0ff',
+                '--accent-alt': '#ff5fb2',
+                '--button-text': '#06202b',
+                '--number-text': '#ffffff',
+                '--shadow': 'rgba(0, 0, 0, 0.22)'
+            },
+            sunset: {
+                '--page-bg': 'linear-gradient(135deg, #ff8a65, #ff4d67)',
+                '--panel-bg': 'rgba(70, 25, 55, 0.95)',
+                '--display-bg': '#ffe7b3',
+                '--accent': '#ffd166',
+                '--accent-alt': '#ff6b6b',
+                '--button-text': '#3d1f1f',
+                '--number-text': 'white'
+            },
+            ocean: {
+                '--page-bg': 'linear-gradient(135deg, #1e88e5, #4dd0e1)',
+                '--panel-bg': 'rgba(5, 44, 75, 0.95)',
+                '--display-bg': '#dff7ff',
+                '--accent': '#7dd3fc',
+                '--accent-alt': '#0ea5e9',
+                '--button-text': '#052b3c',
+                '--number-text': 'white'
+            },
+            midnight: {
+                '--page-bg': 'linear-gradient(135deg, #111827, #1f2937)',
+                '--panel-bg': 'rgba(17, 24, 39, 0.95)',
+                '--display-bg': '#f3f4f6',
+                '--accent': '#60a5fa',
+                '--accent-alt': '#8b5cf6',
+                '--button-text': '#0f172a',
+                '--number-text': 'white'
+            }
+        };
+
+        const pageColor1 = document.getElementById('pageColor1');
+        const pageColor2 = document.getElementById('pageColor2');
+        const panelColor = document.getElementById('panelColor');
+        const accentColor = document.getElementById('accentColor');
+        const numberColor = document.getElementById('numberColor');
+
+        const presetToggle = document.getElementById('presetToggle');
+        const customToggle = document.getElementById('customToggle');
+        const presetThemes = document.getElementById('presetThemes');
+        const customThemes = document.getElementById('customThemes');
+
+        function toggleThemePanel(showCustom) {
+            presetThemes.style.display = showCustom ? 'none' : 'flex';
+            customThemes.classList.toggle('open', showCustom);
+            presetToggle.classList.toggle('active', !showCustom);
+            customToggle.classList.toggle('active', showCustom);
+        }
+
+        function applyTheme(themeName, save = true) {
+            const root = document.documentElement;
+            const selectedTheme = themes[themeName] || themes.default;
+
+            Object.entries(selectedTheme).forEach(([property, value]) => {
+                root.style.setProperty(property, value);
+            });
+
+            document.querySelectorAll('.theme-btn').forEach((button) => {
+                button.classList.toggle('active', button.dataset.theme === themeName);
+            });
+
+            toggleThemePanel(false);
+
+            if (save) {
+                localStorage.setItem('calculator_theme_type', 'preset');
+                localStorage.setItem('calculator_theme_name', themeName);
+            }
+        }
+
+        function applyCustomColors(save = true) {
+            const root = document.documentElement;
+            const customState = {
+                c1: pageColor1.value,
+                c2: pageColor2.value,
+                panel: panelColor.value,
+                accent: accentColor.value,
+                number: numberColor.value
+            };
+
+            root.style.setProperty('--page-bg', `linear-gradient(135deg, ${customState.c1}, ${customState.c2})`);
+            root.style.setProperty('--panel-bg', customState.panel);
+            root.style.setProperty('--accent', customState.accent);
+            root.style.setProperty('--accent-alt', customState.number);
+            root.style.setProperty('--display-bg', '#fdfdfd');
+            root.style.setProperty('--button-text', '#07181b');
+            root.style.setProperty('--number-text', 'white');
+
+            document.querySelectorAll('.theme-btn').forEach((button) => {
+                button.classList.remove('active');
+            });
+
+            if (save) {
+                localStorage.setItem('calculator_theme_type', 'custom');
+                localStorage.setItem('calculator_custom_colors', JSON.stringify(customState));
+            }
+        }
+
+        function loadSavedTheme() {
+            const type = localStorage.getItem('calculator_theme_type');
+            if (type === 'custom') {
+                const saved = JSON.parse(localStorage.getItem('calculator_custom_colors') || '{}');
+                if (saved.c1) pageColor1.value = saved.c1;
+                if (saved.c2) pageColor2.value = saved.c2;
+                if (saved.panel) panelColor.value = saved.panel;
+                if (saved.accent) accentColor.value = saved.accent;
+                if (saved.number) numberColor.value = saved.number;
+                
+                toggleThemePanel(true);
+                applyCustomColors(false);
+            } else {
+                const name = localStorage.getItem('calculator_theme_name') || 'default';
+                applyTheme(name, false);
+            }
+        }
+
+        document.querySelectorAll('.theme-btn').forEach((button) => {
+            button.addEventListener('click', () => applyTheme(button.dataset.theme));
+        });
+
+        presetToggle.addEventListener('click', () => toggleThemePanel(false));
+        customToggle.addEventListener('click', () => toggleThemePanel(true));
+
+        [pageColor1, pageColor2, panelColor, accentColor, numberColor].forEach((input) => {
+            input.addEventListener('input', () => applyCustomColors(true));
+        });
+
+        /* Safe Expression Evaluator */
+        function evaluateSafe(expression) {
+            if (!expression.trim()) return 0;
+
+            let sanitized = expression
+                .replace(/×/g, '*')
+                .replace(/%/g, '/100');
+
+            if (/[^0-9+\-*/.() ]/.test(sanitized)) {
+                return 'Error';
+            }
+
+            try {
+                const result = new Function(`'use strict'; return (${sanitized})`)();
+                
+                if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+                    return Math.round(result * 1e10) / 1e10;
+                }
+                return 'Error';
+            } catch (err) {
+                return 'Error';
+            }
+        }
+
+        function updatePreview() {
+            const display = document.getElementById('display');
+            const displayPreview = document.getElementById('displayPreview');
+            const expression = display.value;
+
+            if (!expression) {
+                displayPreview.value = '0';
+                return;
+            }
+
+            const result = evaluateSafe(expression);
+            displayPreview.value = result;
+        }
+
+        function appendToDisplay(value) {
+            const display = document.getElementById("display");
+            display.value += value;
+            updatePreview();
+        }
+
+        function clearDisplay() {
+            document.getElementById('display').value = '';
+            updatePreview();
+        }
+
+        function calculate() {
+            const display = document.getElementById('display');
+            const result = evaluateSafe(display.value);
+            
+            if (result !== 'Error') {
+                display.value = result;
+                updatePreview();
+            } else {
+                display.value = 'Error';
+                document.getElementById('displayPreview').value = 'Error';
+            }
+        }
+
+        function Backspace() {
+            const display = document.getElementById('display');
+            display.value = display.value.slice(0, -1);
+            updatePreview();
+        }
+
+        /* Keyboard Support Listener */
+        window.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                appendToDisplay(e.key);
+            } else if (['+', '-', '*', '/', '.', '(', ')', '%'].includes(e.key)) {
+                const keyMap = { '*': '×' };
+                appendToDisplay(keyMap[e.key] || e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key === 'Backspace') {
+                Backspace();
+            } else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') {
+                clearDisplay();
+            }
+        });
+
+        // Initialize theme on load
+        loadSavedTheme();
+    </script>
+</body>
+</html>
